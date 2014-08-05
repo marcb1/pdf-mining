@@ -1,5 +1,6 @@
 import pyPdf
 import re
+import string
 
 def all_names_in_pdf(pdf):
   all_names = []
@@ -9,6 +10,18 @@ def all_names_in_pdf(pdf):
     all_names.extend(names)
   return all_names   
 
+def compare_pdf(first_pdf, *other_pdfs):
+  first_pdf_names = all_names_in_pdf(first_pdf)
+  first_pdf_names = [x.strip(string.whitespace) for x in first_pdf_names]
+  for other_pdf in other_pdfs:
+    other_pdf_names = all_names_in_pdf(other_pdf)
+    other_pdf_names = [x.strip(string.whitespace) for x in other_pdf_names]
+    in_first_not_in_other = [x for x in first_pdf_names if x not in other_pdf_names]
+    print "names in first pdf but not in second" 
+    print in_first_not_in_other
+    print ""
+  
+
 def parse_names_from_text(cur_page):
       deans_list_regex = 'Dean.*\s+List'
       page_regex = 'Page.*\s+\d+'
@@ -17,6 +30,11 @@ def parse_names_from_text(cur_page):
       names = re.split('\s{3,}', cur_page)
 
       for name in names:
+          if name.find('\n')!=-1:
+            names.remove(name)
+            split_names = name.split('\n')
+            names.extend(split_names)
+            continue
 
           #Look for 'Dean's List'
           res = re.search(deans_list_regex, name, re.IGNORECASE)
@@ -47,14 +65,17 @@ def find_name_in_list(first, last, list):
     res = re.search(first + '.*\s+.*' + last, name, re.IGNORECASE)
     if res != None:
       matches += 1
+      print "Found: " + name
   return matches;
 
-pdf = pyPdf.PdfFileReader(open("dean-list1.pdf", "rb"))
-year1 = all_names_in_pdf(pdf)
+pdf1 = pyPdf.PdfFileReader(open("dean-list1.pdf", "rb"))
+year1 = all_names_in_pdf(pdf1)
 
-pdf = pyPdf.PdfFileReader(open("dean-list2.pdf", "rb"))
-year2 = all_names_in_pdf(pdf)
+pdf2 = pyPdf.PdfFileReader(open("dean-list2.pdf", "rb"))
+year2 = all_names_in_pdf(pdf2)
 
 print find_name_in_list('Neal', 'T', year1);
 
 print find_name_in_list('Neal', 'T', year2);
+
+compare_pdf(pdf1, pdf2)
